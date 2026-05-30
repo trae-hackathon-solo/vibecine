@@ -1,108 +1,136 @@
 # VibeCine (PixVerse Track MVP)
 
-## Project Introduction
+VibeCine is a hackathon MVP that helps users turn a story idea into a short video by generating a storyboard (shots) and generating one PixVerse clip per shot, inside a workspace-style visual flow UI (React Flow).
 
-VibeCine là một web app MVP giúp người dùng tạo video ngắn theo dạng storyboard bằng PixVerse, được điều phối bằng một workspace dạng flow (React Flow). Thay vì “generate 1 video dài ngay lập tức”, VibeCine chia câu chuyện thành nhiều shot ngắn (3-5 shots cho demo, có thể mở rộng) để:
+The key idea is to treat each node as a shot (not a single frame). This makes the workflow regeneration-friendly: if shot 3 is bad, regenerate shot 3 only, keep the rest.
 
-- Dễ kiểm soát chất lượng từng shot
-- Dễ regenerate một shot mà không ảnh hưởng toàn bộ
-- Dễ chứng minh quá trình dùng TRAE để tạo storyboard, refine prompt, và đảm bảo continuity
-
-Mục tiêu demo theo track: tạo “final story” có tổng thời lượng >= 30s (ví dụ 4 shots x 10s).
+Target demo requirement: final story duration >= 30 seconds (for example 4 shots x 10 seconds).
 
 ## Creative Concept / Problem Statement
 
-Khi làm video generation từ prompt, vấn đề lớn nhất ở hackathon là:
+In text-to-video hackathon demos, the biggest pain points are:
 
-- Output rời rạc giữa các shot, nhân vật thay đổi (face/outfit/lighting)
-- Một prompt dài dễ fail hoặc khó kiểm soát từng đoạn
-- Demo khó thuyết phục nếu không có “quy trình” rõ ràng
+- The output feels disjointed between shots
+- The character identity drifts (face/outfit/lighting)
+- A single long prompt is harder to control and harder to regenerate partially
 
-VibeCine giải bài toán bằng workflow rõ ràng:
+VibeCine solves this with a clear, judge-friendly workflow:
 
-1) Upload ảnh nhân vật (character reference) làm “identity anchor”
-2) Nhập story prompt tổng quan
-3) TRAE tạo storyboard (shot list) và gợi ý prompt
-4) Người dùng chỉnh từng shot
-5) Generate từng shot bằng PixVerse (CLI hoặc API), có thể regenerate
-6) “Final story” phát tuần tự các clip theo thứ tự shots
+1) Upload a character reference image (identity anchor)
+2) Enter a story prompt
+3) TRAE generates a storyboard (3-5 shots for MVP)
+4) User edits each shot prompt
+5) Generate a clip per shot with PixVerse (CLI or API)
+6) Play the final story as sequential clips in a single player
 
-## Workflow (User Flow)
+## Workflow (End to End)
 
-### 1) Input
+### Step 1. Inputs
 
-- Character reference image: ảnh nhân vật, dùng để PixVerse giữ nhận diện xuyên suốt các shots
-- Story prompt: mô tả bối cảnh, nhịp câu chuyện, mood, phong cách hình ảnh
+- Character reference image: the main character identity anchor
+- Story prompt: high-level premise, tone, and visual style
 
-### 2) Storyboard (TRAE)
+### Step 2. Storyboard (TRAE)
 
-- TRAE tạo shot list 3-5 shots:
-  - title
-  - scene description
-  - video prompt (editable)
+TRAE generates a shot list. Each shot contains:
 
-### 3) Shot Review and Edit
+- title
+- scene description
+- video prompt (editable)
 
-Người dùng chỉnh từng shot trực tiếp trên các “shot cards” (Scene nodes).
+### Step 3. Edit Shots
 
-### 4) Generate (PixVerse)
+Each shot is editable in-place (Scene node cards). This is the “human-in-the-loop” step for quality control.
 
-- Generate từng shot bằng nút “Submit to PixVerse”
-- Hoặc generate toàn bộ bằng “Generate all videos”
+### Step 4. Generate Clips (PixVerse)
 
-Để giảm rời rạc, khi generate shot N, app sẽ “nhét context shot N-1” (title/description/prompt) vào prompt shot N dưới dạng text. Điều này giúp model giữ continuity về nhân vật và mood.
+- Per-shot: click “Submit to PixVerse” to generate that shot only
+- Batch: click “Generate all videos” to generate all shots
 
-### 5) Final Output (>= 30s)
+Continuity trick:
 
-“Final output” không merge mp4 ở server trong MVP. Thay vào đó:
+- For shot N, we prepend shot N-1 metadata (title/description/prompt) into shot N’s prompt string.
+- This increases character consistency and reduces “disjointed” transitions without changing the underlying generation call structure.
 
-- App phát tuần tự tất cả clip theo thứ tự shot
-- Đảm bảo tổng thời lượng >= 30s bằng cách đặt duration tối thiểu 10s/shot (ví dụ 4 shots -> ~40s)
+### Step 5. Final Output (>= 30s)
 
-Nếu cần “export 1 file mp4” thật sự, có thể bổ sung ffmpeg server-side sau hackathon.
+For MVP speed and reliability, we do not merge clips into a single MP4 on the server.
 
-## TRAE Usage Highlights (What We Show to Judges)
+Instead:
 
-- TRAE tạo shot list từ story prompt (Storyboard generation)
-- TRAE hỗ trợ refine prompt cho từng shot (camera, lighting, action)
-- TRAE giúp “chaining prompt” giữa các shots:
-  - shot sau mang context shot trước để giảm rời rạc
-- Demo được vòng lặp: edit shot -> regenerate -> chọn clip tốt nhất
+- The app plays clips sequentially in a single “Final Output” player (1 -> 2 -> 3 -> 4)
+- We keep shot duration >= 10s to guarantee total >= 30s for a 3-5 shot storyboard
+
+If you need a single exported MP4, add server-side ffmpeg after the demo.
+
+## Architecture (Diagram)
+
+```mermaid
+flowchart LR
+  UI[Next.js UI / React Flow] --> Store[Zustand Store]
+  Store -->|POST /api/generate-storyboard| TRAE[TRAE Storyboard Generator]
+  Store -->|POST /api/generate-video (multipart: prompt + image)| API[Next.js Route Handler]
+  API -->|spawn PixVerse CLI| CLI[PixVerse CLI]
+  CLI -->|PixVerse Platform| PV[PixVerse]
+  PV -->|video url| CLI --> API --> Store --> UI
+  Store --> Player[Final Output Player (sequential clips)]
+  Player --> UI
+```
+
+## TRAE Usage Highlights (What We Show)
+
+- Story prompt -> storyboard generation (3-5 shots)
+- Prompt refinement per shot (camera/motion/lighting)
+- Continuity chaining by injecting previous shot context into the next shot prompt
+- Clear iteration loop: edit -> regenerate shot -> review
 
 ## PixVerse Usage Highlights
 
-### Option A: PixVerse CLI (recommended for hackathon demo)
+### PixVerse CLI (recommended for hackathon)
 
-CLI cho output JSON rõ ràng, thuận tiện cho demo pipeline.
-
-Ví dụ text-to-video:
-
-```bash
-pixverse create video --prompt "A sunset over ocean waves" --model v6 --quality 720p --aspect-ratio 16:9 --duration 10 --json
-```
-
-Ví dụ image-to-video (dùng ảnh nhân vật làm reference):
-
-```bash
-pixverse create video --prompt "Slow dolly-in, cinematic lighting" --image ./character.png --duration 10 --json
-```
-
-CLI login:
+CLI is great for hackathons because it outputs structured JSON and is easy to script. Example commands from PixVerse documentation:
 
 ```bash
 pixverse auth login
 pixverse auth status --json
 ```
 
-### Option B: PixVerse Platform API (fallback)
+Text-to-video:
 
-Nếu muốn gọi API trực tiếp, workflow vẫn tương tự:
+```bash
+pixverse create video --prompt "A sunset over ocean waves" --model v6 --quality 1080p --aspect-ratio 16:9 --duration 8 --audio --json
+```
 
-- upload image -> nhận img_id
-- generate -> nhận video_id
-- poll result -> lấy url
+Image-to-video:
 
-## Repo Tech Stack
+```bash
+pixverse create video --prompt "Slow zoom in, cinematic lighting" --image ./character.png --duration 10 --json
+```
+
+### PixVerse Platform API (optional)
+
+API workflow is: upload image -> generate -> poll status -> get URL. In this MVP we primarily focus on CLI for speed.
+
+## Hackathon Issues We Hit (and Fixes)
+
+These are real issues we encountered while building the MVP:
+
+1) Next.js runtime error: createContext only works in Client Components
+   - Fix: move providers (HeroUIProvider) into a dedicated client Providers component.
+
+2) PixVerse API error: Insufficient balance / top up credits
+   - Cause: API credits are separate and can be empty.
+   - Fix: switch to CLI account credits or top up.
+
+3) Windows process error: spawn EINVAL
+   - Cause: spawning a .cmd shim directly can fail depending on environment.
+   - Fix: run PixVerse through cmd.exe or spawn the underlying command correctly.
+
+4) CLI parsing error: PixVerse CLI did not return JSON
+   - Cause: CLI may print JSON with extra logs/progress or use stderr.
+   - Fix: robust JSON extraction from mixed output (strip ANSI, detect JSON blocks).
+
+## Tech Stack
 
 - Next.js 15 (App Router)
 - React 19
@@ -111,21 +139,21 @@ Nếu muốn gọi API trực tiếp, workflow vẫn tương tự:
 - HeroUI v2
 - React Flow
 - Zustand
-- No DB, no auth, no external backend
+- No database, no auth, no external backend
 
 ## Local Setup
 
-### Prerequisites
+### Requirements
 
 - Node.js 20+
-- PixVerse CLI installed and logged in (nếu dùng CLI)
+- PixVerse CLI installed and authenticated
 
 ```bash
 npm install -g pixverse
 pixverse auth login
 ```
 
-### Install and Run
+### Run
 
 ```bash
 npm install
@@ -134,32 +162,19 @@ npm run dev
 
 Open: http://localhost:3000
 
-## Demo Script (fast)
+## Demo Script (Fast)
 
-1) Upload character reference image
-2) Paste story prompt
+1) Upload a character reference image
+2) Paste a story prompt
 3) Click “Generate storyboard”
 4) Edit shot prompts (optional)
 5) Click “Generate all videos”
-6) Click “Play full story” để xem toàn bộ flow
-
-## Team Build Process (Hackathon-friendly)
-
-Chúng tôi tối ưu cho tốc độ:
-
-- Chốt data model đơn giản: Project -> Scenes (shots) -> Generated clips
-- Tập trung vào UX demo: Flow UI + per-shot review + regen
-- Dùng TRAE để:
-  - generate storyboard nhanh
-  - rewrite prompt cho chất lượng ổn định
-  - thêm continuity giữa shot trước và shot sau
-- Dùng PixVerse để generate clip theo shot, đảm bảo tổng thời lượng >= 30s
+6) Click “Play full story” to show a single-player 30s+ story
 
 ## Key Files
 
 - Flow UI: `src/app/page.tsx`
-- Store: `src/store/useAppStore.ts`
+- State store: `src/store/useAppStore.ts`
 - Shot node UI: `src/components/SceneNode.tsx`
 - Final output player: `src/components/OutputNode.tsx`
 - Generate route: `src/app/api/generate-video/route.ts`
-
