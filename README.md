@@ -1,5 +1,7 @@
 # VibeCine (PixVerse Track MVP)
 
+**[TRAE DEMO WALL — Vote & view project](https://intl.traedemo.com/en-US/works/22)**
+
 > Hackathon submission summary table: [PROJECT_INFORMATION.md](./PROJECT_INFORMATION.md)
 
 VibeCine is a hackathon MVP that helps users turn a story idea into a short video by generating a storyboard (shots) and generating one PixVerse clip per shot, inside a workspace-style visual flow UI (React Flow).
@@ -100,10 +102,22 @@ flowchart LR
 
 ## TRAE Usage Highlights (What We Show)
 
-- Story prompt -> storyboard generation (3-5 shots)
-- Prompt refinement per shot (camera/motion/lighting)
-- Continuity chaining by injecting previous shot context into the next shot prompt
-- Clear iteration loop: edit -> regenerate shot -> review
+- Story prompt to storyboard: TRAE generates an initial 3-5 shot list (titles + descriptions + draft prompts) fast enough for a live demo.
+- Shot-first thinking: we treat each node as a shot (not a frame), which makes regeneration and review simple during a hackathon.
+- Prompt drafting and refinement: TRAE helps turn plain language scene intent into a more “PixVerse-friendly” video prompt (camera, motion, lighting, mood).
+- Continuity chaining: for shot N, we inject shot N-1 context (title/description/prompt) into shot N’s prompt string to reduce character drift and “disjointed” transitions.
+- Constraint enforcement: we tune per-shot duration (for example 10s minimum) so the final story reaches >= 30s even with a small number of shots.
+- Debug-friendly iteration: TRAE-assisted editing focuses on a loop that judges can follow (edit one shot, regenerate that shot, keep the rest unchanged).
+- Integration decisions under time pressure: we switched between PixVerse API vs PixVerse CLI depending on reliability and credit availability, and used TRAE to keep the workflow coherent.
+- Error-driven hardening: we used the failures encountered during development (Next.js client/server boundary errors, CLI spawn issues, CLI JSON parsing quirks) to improve the demo robustness and narrate the “engineering story” to judges.
+
+## How TRAE Helped Us During the Build
+
+This project was built under a tight 1-2 hour hackathon window. The biggest value TRAE added was shortening the loop from “idea -> runnable demo” while keeping the workflow explainable to judges:
+
+- Turned a rough product idea into a shot-based workflow and data model quickly.
+- Helped debug Next.js App Router pitfalls (server vs client components) when we hit runtime errors.
+- Helped translate issues we encountered (PixVerse credits, CLI spawn quirks, JSON output parsing) into actionable fixes and a cleaner demo narrative.
 
 ## PixVerse Usage Highlights
 
