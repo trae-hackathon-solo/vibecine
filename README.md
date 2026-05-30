@@ -6,6 +6,12 @@ The key idea is to treat each node as a shot (not a single frame). This makes th
 
 Target demo requirement: final story duration >= 30 seconds (for example 4 shots x 10 seconds).
 
+## Demo Video
+
+Link: https://www.youtube.com/watch?v=MSb9vTwcIac
+
+[![VibeCine demo video](https://img.youtube.com/vi/MSb9vTwcIac/maxresdefault.jpg)](https://www.youtube.com/watch?v=MSb9vTwcIac&feature=youtu.be)
+
 ## Creative Concept / Problem Statement
 
 In text-to-video hackathon demos, the biggest pain points are:
@@ -69,10 +75,11 @@ If you need a single exported MP4, add server-side ffmpeg after the demo.
 flowchart LR
   UI[Next.js UI / React Flow] --> Store[Zustand Store]
   Store -->|POST /api/generate-storyboard| TRAE[TRAE Storyboard Generator]
-  Store -->|POST /api/generate-video (multipart: prompt + image)| API[Next.js Route Handler]
-  API -->|spawn PixVerse CLI| CLI[PixVerse CLI]
-  CLI -->|PixVerse Platform| PV[PixVerse]
-  PV -->|video url| CLI --> API --> Store --> UI
+  Store -->|POST /api/generate-video (multipart - prompt + image)| API[Next.js Route Handler]
+  API -->|spawn pixverse CLI| CLI[PixVerse CLI]
+  CLI --> PV[PixVerse]
+  PV -->|video url| CLI
+  CLI --> API --> Store --> UI
   Store --> Player[Final Output Player (sequential clips)]
   Player --> UI
 ```
