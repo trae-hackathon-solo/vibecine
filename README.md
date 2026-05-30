@@ -12,22 +12,9 @@ Target demo requirement: final story duration >= 30 seconds (for example 4 shots
 
 ### YouTube
 
-**[Watch on YouTube](https://www.youtube.com/watch?v=MSb9vTwcIac)**
+**[Watch on YouTube](https://www.youtube.com/watch?v=2rFcfjQH7PM)**
 
-[![Watch the VibeCine demo on YouTube](https://img.youtube.com/vi/MSb9vTwcIac/hqdefault.jpg)](https://www.youtube.com/watch?v=MSb9vTwcIac)
-
-> GitHub does not embed YouTube players in README. Use the link above, or click the thumbnail.  
-> If the image does not load, `maxresdefault.jpg` may be missing for this video — `hqdefault.jpg` is used instead.
-
-### In-repo demo (plays on GitHub)
-
-GitHub README supports **MP4 / WebM / MOV** via HTML `<video>`, not WMV. The source file `demo_official.wmv` was converted to:
-
-`docs/demo_official.mp4`
-
-<video src="docs/demo_official.mp4" controls width="100%">
-  <a href="docs/demo_official.mp4">Download demo (MP4)</a>
-</video>
+[![Watch the VibeCine demo on YouTube](https://img.youtube.com/vi/2rFcfjQH7PM/hqdefault.jpg)](https://www.youtube.com/watch?v=2rFcfjQH7PM)
 
 ## Creative Concept / Problem Statement
 
