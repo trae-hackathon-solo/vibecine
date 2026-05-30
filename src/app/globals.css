@@ -1,0 +1,131 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --canvas: #09090b;
+  --canvas-elevated: #18181b;
+  --canvas-border: rgba(255, 255, 255, 0.08);
+  --accent: #f59e0b;
+  --accent-muted: #d97706;
+  --text-primary: #fafafa;
+  --text-secondary: #a1a1aa;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background: var(--canvas);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+}
+
+.react-flow {
+  width: 100%;
+  height: 100%;
+}
+
+/* React Flow: custom node types must not use reserved names (input/output/group/default). */
+.react-flow__node {
+  border: none !important;
+  background: transparent !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+  width: auto !important;
+  min-width: 0 !important;
+}
+
+.react-flow__node.selectable:hover,
+.react-flow__node.selectable.selected,
+.react-flow__node.selectable:focus,
+.react-flow__node.selectable:focus-visible {
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.react-flow__handle {
+  width: 10px;
+  height: 10px;
+  border: 2px solid var(--canvas);
+  background: var(--accent);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.react-flow__handle:hover {
+  transform: scale(1.15);
+  box-shadow: 0 0 0 4px var(--accent-glow, rgba(245, 158, 11, 0.25));
+}
+
+.react-flow__edge-path {
+  stroke: #52525b;
+  stroke-width: 2;
+}
+
+.react-flow__edge.selected .react-flow__edge-path,
+.react-flow__edge:hover .react-flow__edge-path {
+  stroke: var(--accent);
+}
+
+.react-flow__controls {
+  border: 1px solid var(--canvas-border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--canvas-elevated);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.react-flow__controls-button {
+  background: var(--canvas-elevated);
+  border-bottom: 1px solid var(--canvas-border);
+  fill: #a1a1aa;
+}
+
+.react-flow__controls-button:hover {
+  background: #27272a;
+  fill: var(--text-primary);
+}
+
+.react-flow__attribution {
+  background: transparent;
+  opacity: 0.35;
+}
+
+.react-flow__attribution a {
+  color: #71717a;
+}
+
+@layer components {
+  .workflow-node {
+    @apply w-[min(20rem,85vw)] rounded-2xl border border-white/[0.08] bg-zinc-900/90 shadow-node backdrop-blur-sm;
+  }
+
+  .workflow-node-header {
+    @apply flex items-center gap-3 border-b border-white/[0.06] px-5 py-4;
+  }
+
+  .workflow-node-body {
+    @apply space-y-4 p-5;
+  }
+
+  .workflow-label {
+    @apply text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500;
+  }
+
+  .workflow-badge {
+    @apply flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-500/15 text-xs font-bold text-amber-400 ring-1 ring-amber-500/25;
+  }
+
+  .workflow-field input,
+  .workflow-field textarea {
+    @apply rounded-xl border border-white/[0.08] bg-zinc-950/80 text-zinc-100 placeholder:text-zinc-600;
+  }
+}
