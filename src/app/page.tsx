@@ -18,14 +18,10 @@ import "reactflow/dist/style.css";
 import { InputNode } from "@/components/InputNode";
 import { SceneNode } from "@/components/SceneNode";
 import { OutputNode } from "@/components/OutputNode";
-import { PixverseKeyInput } from "@/components/PixverseKeyInput";
 import { Button, Chip } from "@heroui/react";
 import { useAppStore } from "@/store/useAppStore";
 import { Scene } from "@/types";
 import { generateStoryboardClient } from "@/lib/storyboard/generate.client";
-import { generateSceneVideoClient } from "@/lib/video/generate-scene.browser";
-import { hasPixverseApiKey } from "@/lib/pixverse/api-key";
-import { PixverseError } from "@/lib/pixverse/types";
 
 const nodeTypes = {
   projectInput: InputNode,
@@ -44,7 +40,7 @@ const initialNodes: Node[] = [
   {
     id: "final-output",
     type: "finalOutput",
-    position: { x: 920, y: 220 },
+    position: { x: 1560, y: 220 },
     data: {},
     draggable: true,
   },
@@ -68,7 +64,7 @@ function buildSceneGraph(scenes: Scene[]) {
   const sceneNodes: Node[] = scenes.map((scene, i) => ({
     id: scene.id,
     type: "scene",
-    position: { x: 340 + i * 240, y: 160 + (i % 2) * 40 },
+    position: { x: 420 + i * 360, y: 140 + (i % 2) * 140 },
     data: { sceneId: scene.id },
     draggable: true,
   }));
@@ -107,7 +103,6 @@ function Workflow() {
 
   const {
     storyPrompt,
-    referenceImage,
     scenes,
     setScenes,
     isGeneratingStoryboard,
@@ -115,7 +110,7 @@ function Workflow() {
     statusMessage,
     setStatusMessage,
     setGeneratingStoryboard,
-    setGeneratingVideos,
+    generateAllSceneClips,
   } = useAppStore();
 
   const sceneIdsKey = useMemo(
@@ -170,63 +165,7 @@ function Workflow() {
   };
 
   const generateVideos = async () => {
-    if (!scenes.length) {
-      setStatusMessage("Generate a storyboard first.");
-      return;
-    }
-
-    if (!hasPixverseApiKey()) {
-      setStatusMessage(
-        "Set NEXT_PUBLIC_PIXVERSE_API_KEY or paste key in header"
-      );
-      return;
-    }
-
-    setGeneratingVideos(true);
-    setStatusMessage("Calling PixVerse API directly…");
-
-    for (const scene of scenes) {
-      useAppStore.getState().updateScene(scene.id, {
-        status: "generating",
-        errorMessage: undefined,
-      });
-
-      try {
-        const result = await generateSceneVideoClient({
-          prompt: scene.videoPrompt,
-          referenceImage,
-        });
-
-        useAppStore.getState().updateScene(scene.id, {
-          status: "completed",
-          videoUrl: result.videoUrl,
-          videoId: result.videoId,
-          errorMessage: undefined,
-        });
-
-        setStatusMessage(`${scene.title}: done (${result.mode})`);
-      } catch (err) {
-        const msg =
-          err instanceof PixverseError
-            ? err.message
-            : err instanceof Error
-              ? err.message
-              : "Generation failed";
-
-        const isCors =
-          msg.includes("Failed to fetch") || msg.includes("NetworkError");
-
-        useAppStore.getState().updateScene(scene.id, {
-          status: "failed",
-          errorMessage: isCors
-            ? "CORS/network blocked — check browser console"
-            : msg,
-        });
-        setStatusMessage(`${scene.title}: ${msg}`);
-      }
-    }
-
-    setGeneratingVideos(false);
+    await generateAllSceneClips();
   };
 
   return (
@@ -247,7 +186,6 @@ function Workflow() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <PixverseKeyInput />
           {statusMessage && (
             <Chip size="sm" variant="flat" className="max-w-md">
               {statusMessage}

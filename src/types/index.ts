@@ -32,5 +32,10 @@ export interface AppState {
   setStitchResult: (result: StitchResult | null) => void;
   setGeneratingStoryboard: (value: boolean) => void;
   setGeneratingVideos: (value: boolean) => void;
+  generateSceneClip: (
+    sceneId: string,
+    options?: { fallbackToDemoOnError?: boolean }
+  ) => Promise<void>;
+  generateAllSceneClips: () => Promise<void>;
   resetState: () => void;
 }

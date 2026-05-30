@@ -5,9 +5,6 @@ import { Input, Textarea, Chip, Button } from "@heroui/react";
 import { useAppStore } from "@/store/useAppStore";
 import { Scene } from "@/types";
 import { WorkflowNodeShell } from "@/components/WorkflowNodeShell";
-import { generateSceneVideoClient } from "@/lib/video/generate-scene.browser";
-import { hasPixverseApiKey } from "@/lib/pixverse/api-key";
-import { PixverseError } from "@/lib/pixverse/types";
 
 const statusConfig: Record<
   Scene["status"],
@@ -23,46 +20,13 @@ export const SceneNode = ({ data }: NodeProps<{ sceneId: string }>) => {
   const scene = useAppStore((s) =>
     s.scenes.find((sc) => sc.id === data.sceneId)
   );
-  const referenceImage = useAppStore((s) => s.referenceImage);
-  const { updateScene, setStatusMessage } = useAppStore();
+  const updateScene = useAppStore((s) => s.updateScene);
+  const generateSceneClip = useAppStore((s) => s.generateSceneClip);
 
   if (!scene) return null;
 
   const status = statusConfig[scene.status];
   const shotIndex = scene.id.split("-")[1] ?? "?";
-
-  const regenerateOne = async () => {
-    if (!hasPixverseApiKey()) {
-      setStatusMessage("PixVerse API key required");
-      return;
-    }
-
-    updateScene(scene.id, { status: "generating", errorMessage: undefined });
-    setStatusMessage(`PixVerse: ${scene.title}…`);
-
-    try {
-      const result = await generateSceneVideoClient({
-        prompt: scene.videoPrompt,
-        referenceImage,
-      });
-      updateScene(scene.id, {
-        status: "completed",
-        videoUrl: result.videoUrl,
-        videoId: result.videoId,
-        errorMessage: undefined,
-      });
-      setStatusMessage(`${scene.title}: ${result.mode}`);
-    } catch (err) {
-      const msg =
-        err instanceof PixverseError
-          ? err.message
-          : err instanceof Error
-            ? err.message
-            : "Failed";
-      updateScene(scene.id, { status: "failed", errorMessage: msg });
-      setStatusMessage(msg);
-    }
-  };
 
   return (
     <>
@@ -134,7 +98,7 @@ export const SceneNode = ({ data }: NodeProps<{ sceneId: string }>) => {
         )}
 
         {scene.videoUrl && (
-          <div className="nodrag nowheel overflow-hidden rounded-xl border border-white/[0.08]">
+          <div className="pt-24 nodrag nowheel overflow-hidden rounded-xl border border-white/[0.08]">
             <video
               src={scene.videoUrl}
               controls
@@ -146,11 +110,11 @@ export const SceneNode = ({ data }: NodeProps<{ sceneId: string }>) => {
         <Button
           size="sm"
           variant="flat"
-          className="nodrag w-full"
-          onPress={regenerateOne}
+          className="nodrag mt-3 w-full"
+          onPress={() => generateSceneClip(scene.id)}
           isDisabled={scene.status === "generating"}
         >
-          Regenerate clip
+          Submit to PixVerse
         </Button>
       </WorkflowNodeShell>
     </>

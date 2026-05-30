@@ -19,7 +19,8 @@ export async function POST(request: Request) {
       );
     }
 
-    const totalDurationSec = valid.length * 5;
+    const perShotSec = Math.max(10, Math.ceil(30 / Math.max(1, valid.length)));
+    const totalDurationSec = valid.length * perShotSec;
 
     return NextResponse.json({
       clips: valid,

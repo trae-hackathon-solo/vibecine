@@ -9,6 +9,7 @@ import { WorkflowNodeShell } from "@/components/WorkflowNodeShell";
 export const OutputNode = () => {
   const { scenes, setStatusMessage } = useAppStore();
   const [previewIndex, setPreviewIndex] = useState(0);
+  const estimatedShotDurationSec = Math.max(10, Math.ceil(30 / Math.max(1, scenes.length)));
 
   const completedScenes = scenes.filter((s) => s.status === "completed");
   const total = scenes.length;
@@ -26,7 +27,9 @@ export const OutputNode = () => {
 
   const handleStitch = () => {
     setPreviewIndex(0);
-    setStatusMessage(`Playing ${clips.length} clips (~${clips.length * 5}s)`);
+    setStatusMessage(
+      `Playing ${clips.length} clips (~${clips.length * estimatedShotDurationSec}s)`
+    );
   };
 
   return (
